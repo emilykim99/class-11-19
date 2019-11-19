@@ -1,0 +1,52 @@
+---
+title: "Class 2019 11-19"
+author: "Emily Kim"
+date: "11/19/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyr)
+library(sf)
+library(readr)
+library(skimr)
+library(fs)
+library(purrr)
+library(dplyr)
+```
+```{r download, cache = TRUE}
+download.file("https://github.com/TheUpshot/2018-live-poll-results/archive/master.zip",
+              destfile = "master.zip")
+
+unzip("master.zip")
+
+#Need a list of all the files, then read them all in map_*
+
+my_list <- fs::dir_ls("2018-live-poll-results-master/data/")
+
+raw<- map_dfr(my_list, .id = "source", read_csv, col_types = cols(
+  .default = col_character(),
+  turnout_scale = col_double(),
+  turnout_score = col_double(),
+  w_LV = col_double(),
+  w_RV = col_double(),
+  final_weight = col_double(),
+  timestamp = col_datetime(format = "")
+))
+#map_dfr performs function within a list and returns a dataframe, .id --> "source"
+
+fs::file_delete("2018-live-poll-results-master/")
+```
+```{r}
+# Create a 0/1 variable dvote for Democratic vote
+# Create a 0/1 variable female
+x <- raw %>% 
+  mutate(dvote = ifelse(response == "Dem", 1, 0)) %>% 
+  mutate(female = ifelse(gender == "Female", 1, 0)) %>% 
+  select(dvote, female, response, gender)
+
+# Relationship between dvote and female?
+glm(x dvote ~ female, family = binomial)
+```
+
